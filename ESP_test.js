@@ -1,21 +1,13 @@
-ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage("net.minecraft.client.renderer.entity.RenderGlobal", "doRenderEntityOutline")] = function (entity, partialTicks) {
-    if (!ModAPI.mc.theWorld || !ModAPI.mc.thePlayer) return;
-    
-    // Get all tile entities in the world
-    var tileEntities = ModAPI.mc.theWorld.loadedTileEntityList;
+ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage("net.minecraft.client.renderer.BlockRendererDispatcher", "renderBlock")] = function (blockState, pos, world, buffer) {
+    if (!ModAPI.mc.theWorld || !ModAPI.mc.thePlayer) return false;
 
-    tileEntities.forEach(tile => {
-        if (tile instanceof net.minecraft.tileentity.TileEntityChest) {
-            // Convert chest coordinates to render position
-            var x = tile.getPos().getX() - ModAPI.mc.getRenderManager().viewerPosX;
-            var y = tile.getPos().getY() - ModAPI.mc.getRenderManager().viewerPosY;
-            var z = tile.getPos().getZ() - ModAPI.mc.getRenderManager().viewerPosZ;
+    var tileEntity = ModAPI.mc.theWorld.getTileEntity(pos);
 
-            // Draw a green box around the chest
-            ModAPI.minecraft.drawBoundingBox(x, y, z, x + 1, y + 1, z + 1, 0, 255, 0, 1); // Green color
-        }
-    });
+    // If the block is a chest, render it normally
+    if (tileEntity instanceof net.minecraft.tileentity.TileEntityChest) {
+        return this.renderBlock(blockState, pos, world, buffer);
+    }
 
-    // Call original function to continue normal rendering
-    return this.doRenderEntityOutline(entity, partialTicks);
+    // Otherwise, make all other blocks invisible
+    return false;
 };
