@@ -1,4 +1,4 @@
-// Function to create the main button that opens another menu in the Options GUI
+// Function to create the main button that opens a confirmation dialog
 function createMainButton() {
     var buttonClass = ModAPI.reflect.getClassById("net.minecraft.client.gui.GuiButton");
     var buttonConstructor = buttonClass.constructors.find(x => x.length === 6);
@@ -16,27 +16,30 @@ function createMainButton() {
     // Hook into button click event
     ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage("net.minecraft.client.gui.GuiOptions", "actionPerformed")] = function (button) {
         if (button.id === 1000) {
-            ModAPI.minecraft.displayGuiScreen(new CustomMenu());
+            var confirm = confirm("Do you want to enter the menu?");
+            if (confirm) {
+                ModAPI.minecraft.displayGuiScreen(new CustomMenu());
+            }
         }
     };
 }
 
-// Custom menu with two buttons
+// Custom menu with two buttons positioned on each side
 function CustomMenu() {
     var buttonClass = ModAPI.reflect.getClassById("net.minecraft.client.gui.GuiButton");
     var buttonConstructor = buttonClass.constructors.find(x => x.length === 6);
 
     this.initGui = function () {
         var gui = ModAPI.util.wrap(this).getCorrective();
-        this.buttonList.add(buttonConstructor(2000, gui.width / 2 - 50, gui.height / 2 - 20, 100, 20, ModAPI.util.str("Button 1")));
-        this.buttonList.add(buttonConstructor(2001, gui.width / 2 - 50, gui.height / 2 + 10, 100, 20, ModAPI.util.str("Button 2")));
+        this.buttonList.add(buttonConstructor(2000, 10, gui.height / 2 - 10, 100, 20, ModAPI.util.str("Left Button")));
+        this.buttonList.add(buttonConstructor(2001, gui.width - 110, gui.height / 2 - 10, 100, 20, ModAPI.util.str("Right Button")));
     };
     
     this.actionPerformed = function (button) {
         if (button.id === 2000) {
-            alert("Button 1 Clicked!");
+            alert("Left Button Clicked!");
         } else if (button.id === 2001) {
-            alert("Button 2 Clicked!");
+            alert("Right Button Clicked!");
         }
     };
 
