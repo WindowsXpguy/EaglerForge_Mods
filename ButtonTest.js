@@ -1,30 +1,28 @@
-// Utility function to create and manage buttons
+// Utility function to add and remove buttons dynamically
 function button_utility_script(inputArr, bindingClass, removeOnOpen) {
-    var button = ModAPI.reflect.getClassById("net.minecraft.client.gui.GuiButton").constructors.find(x => x.length === 6);
+    var buttonClass = ModAPI.reflect.getClassById("net.minecraft.client.gui.GuiButton");
+    var buttonConstructor = buttonClass.constructors.find(x => x.length === 6);
     var originalInit = ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage(bindingClass, "initGui")];
 
-    var out = inputArr.map(x => button(x.uid, x.x, x.y, x.w, x.h, ModAPI.util.str(x.text)));
+    var buttonInstances = inputArr.map(x => buttonConstructor(x.uid, x.x, x.y, x.w, x.h, ModAPI.util.str(x.text)));
 
     // Hook into the GUI initialization
     ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage(bindingClass, "initGui")] = function (...args) {
         originalInit.apply(this, args);
-        if (removeOnOpen) {
-            var gui = ModAPI.util.wrap(args[0]).getCorrective();
-            gui.buttonList.clear(); // Remove buttons when opening the GUI
-        }
-    };
+        var gui = ModAPI.util.wrap(args[0]).getCorrective();
 
-    // Add button when NOT in options menu
-    if (!removeOnOpen) {
-        ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage(bindingClass, "drawScreen")] = function (...args) {
-            var gui = ModAPI.util.wrap(args[0]).getCorrective();
+        if (removeOnOpen) {
+            // Remove ONLY the floating button, NOT all buttons
+            gui.buttonList = gui.buttonList.filter(btn => !inputArr.some(x => x.uid === btn.id));
+        } else {
+            // Add the button only when NOT in options GUI
             var screenWidth = gui.width;
-            out.forEach(guiButton => {
-                guiButton.xPosition = screenWidth - 110; // Position dynamically
+            buttonInstances.forEach(guiButton => {
+                guiButton.xPosition = screenWidth - 110; // Place in top-right corner
                 gui.buttonList.add(guiButton);
             });
-        };
-    }
+        }
+    };
 }
 
 // Define the floating button
@@ -40,8 +38,8 @@ var floatingButton = [{
     uid: 999999  // Unique button ID
 }];
 
-// Add button to HUD (always visible)
+// Add the button to the HUD (always visible)
 button_utility_script(floatingButton, "net.minecraft.client.gui.GuiIngame", false);
 
-// Remove the button when Options GUI is opened
-button_utility_script([], "net.minecraft.client.gui.GuiOptions", true);
+// Ensure ONLY our button is removed when opening Options GUI
+button_utility_script(floatingButton, "net.minecraft.client.gui.GuiOptions", true);
