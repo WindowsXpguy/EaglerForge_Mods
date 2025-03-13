@@ -1,18 +1,18 @@
-// Function to create the main button that opens another menu
+// Function to create the main button that opens another menu in the Options GUI
 function createMainButton() {
     var buttonClass = ModAPI.reflect.getClassById("net.minecraft.client.gui.GuiButton");
     var buttonConstructor = buttonClass.constructors.find(x => x.length === 6);
     
     var mainButton = buttonConstructor(1000, 10, 10, 150, 20, ModAPI.util.str("Open Menu"));
     
-    // Hook into the GUI initialization
-    ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage("net.minecraft.client.gui.GuiScreen", "initGui")] = function (...args) {
+    // Hook into the Options GUI initialization
+    ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage("net.minecraft.client.gui.GuiOptions", "initGui")] = function (...args) {
         var gui = ModAPI.util.wrap(args[0]).getCorrective();
         gui.buttonList.add(mainButton);
     };
     
     // Hook into button click event
-    ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage("net.minecraft.client.gui.GuiScreen", "actionPerformed")] = function (button) {
+    ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage("net.minecraft.client.gui.GuiOptions", "actionPerformed")] = function (button) {
         if (button.id === 1000) {
             ModAPI.minecraft.displayGuiScreen(new CustomMenu());
         }
@@ -38,5 +38,5 @@ function CustomMenu() {
     };
 }
 
-// Call function to create the main button
+// Call function to create the main button in the Options GUI
 createMainButton();
