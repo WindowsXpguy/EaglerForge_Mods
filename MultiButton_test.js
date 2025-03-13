@@ -28,8 +28,8 @@ function CustomMenu() {
 
     this.initGui = function () {
         var gui = ModAPI.util.wrap(this).getCorrective();
-        this.buttonList.add(buttonConstructor(2000, 10, 10, 100, 20, ModAPI.util.str("Button 1")));
-        this.buttonList.add(buttonConstructor(2001, 10, 40, 100, 20, ModAPI.util.str("Button 2")));
+        this.buttonList.add(buttonConstructor(2000, gui.width / 2 - 50, gui.height / 2 - 20, 100, 20, ModAPI.util.str("Button 1")));
+        this.buttonList.add(buttonConstructor(2001, gui.width / 2 - 50, gui.height / 2 + 10, 100, 20, ModAPI.util.str("Button 2")));
     };
     
     this.actionPerformed = function (button) {
@@ -38,6 +38,12 @@ function CustomMenu() {
         } else if (button.id === 2001) {
             alert("Button 2 Clicked!");
         }
+    };
+
+    this.drawScreen = function (mouseX, mouseY, partialTicks) {
+        this.drawDefaultBackground();
+        this.drawCenteredString(ModAPI.mc.fontRenderer, "Custom Menu", this.width / 2, 20, 0xFFFFFF);
+        this.superDrawScreen(mouseX, mouseY, partialTicks);
     };
 }
 
