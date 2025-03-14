@@ -1,45 +1,51 @@
-// Utility function to add and remove buttons dynamically
-function button_utility_script(inputArr, bindingClass, removeOnOpen) {
-    var buttonClass = ModAPI.reflect.getClassById("net.minecraft.client.gui.GuiButton");
-    var buttonConstructor = buttonClass.constructors.find(x => x.length === 6);
+function button_utility_script(inputArr, bindingClass) {
+    // By ChatGPT (Modified for helpful use)
+    var button = ModAPI.reflect.getClassById("net.minecraft.client.gui.GuiButton").constructors.find(x => x.length === 6);
+    var originalActionPerformed = ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage(bindingClass, "actionPerformed")];
     var originalInit = ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage(bindingClass, "initGui")];
 
-    var buttonInstances = inputArr.map(x => buttonConstructor(x.uid, x.x, x.y, x.w, x.h, ModAPI.util.str(x.text)));
+    var out = inputArr.flatMap(x => {
+        return button(x.uid, x.x, x.y, x.w, x.h, ModAPI.util.str(x.text));
+    });
 
-    // Hook into the GUI initialization
+    ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage(bindingClass, "actionPerformed")] = function (...args) {
+        var id = ModAPI.util.wrap(args[1]).getCorrective().id;
+        var jsAction = inputArr.find(x => x.uid === id);
+        if (jsAction) {
+            jsAction.click(ModAPI.util.wrap(args[0]));
+        }
+        return originalActionPerformed.apply(this, args);
+    }
+
     ModAPI.hooks.methods[ModAPI.util.getMethodFromPackage(bindingClass, "initGui")] = function (...args) {
         originalInit.apply(this, args);
         var gui = ModAPI.util.wrap(args[0]).getCorrective();
-
-        if (removeOnOpen) {
-            // Remove ONLY the floating button, NOT all buttons
-            gui.buttonList = gui.buttonList.filter(btn => !inputArr.some(x => x.uid === btn.id));
-        } else {
-            // Add the button only when NOT in options GUI
-            var screenWidth = gui.width;
-            buttonInstances.forEach(guiButton => {
-                guiButton.xPosition = screenWidth - 110; // Place in top-right corner
-                gui.buttonList.add(guiButton);
-            });
-        }
-    };
+        out.forEach(guiButton => {
+            gui.buttonList.add(guiButton);
+        });
+    }
 }
 
-// Define the floating button
-var floatingButton = [{
-    text: "Click Me",
-    click: () => {
-        alert("Button Clicked!");
-    },
-    x: 0,   // X position (set dynamically)
-    y: 10,  // Y position (always visible at the top)
-    w: 100,  // Width
-    h: 20,   // Height
-    uid: 999999  // Unique button ID
-}];
+(() => {
+    ModAPI.meta.title("Helpful Options Button");
+    ModAPI.meta.description("Adds a useful button to the options menu.");
+    ModAPI.meta.credits("by ChatGPT");
 
-// Add the button to the HUD (always visible)
-button_utility_script(floatingButton, "net.minecraft.client.gui.GuiIngame", false);
+    var optionButtons = [
+        {
+            text: "Toggle Full Bright",
+            click: () => {
+                ModAPI.minecraft.gameSettings.gammaSetting = (ModAPI.minecraft.gameSettings.gammaSetting > 1.0) ? 1.0 : 10.0;
+                alert("Brightness Set to " + (ModAPI.minecraft.gameSettings.gammaSetting > 1.0 ? "Max" : "Normal"));
+            },
+            x: 10,
+            y: 10,
+            w: 150,
+            h: 20,
+            uid: 142715300
+        }
+    ];
 
-// Ensure ONLY our button is removed when opening Options GUI
-button_utility_script(floatingButton, "net.minecraft.client.gui.GuiOptions", true);
+    // Add button to Options GUI only
+    button_utility_script(optionButtons, "net.minecraft.client.gui.GuiOptions");
+})();
